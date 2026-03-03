@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoDeck — NET Architecture Generator</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<header id="header">
+    <h1>&gt; AUTO<span class="accent">DECK</span></h1>
+    <p class="subtitle">NET Architecture Generator &mdash; Cyberpunk RED</p>
+</header>
+
+<section id="controls">
+    <div class="controls-row">
+        <div class="diff-group">
+            <span class="diff-label">Difficulty</span>
+            <button class="diff-btn" data-difficulty="basic">Basic</button>
+            <button class="diff-btn active" data-difficulty="standard">Standard</button>
+            <button class="diff-btn" data-difficulty="uncommon">Uncommon</button>
+            <button class="diff-btn" data-difficulty="advanced">Advanced</button>
+        </div>
+        <div class="floor-group">
+            <label class="diff-label" for="floor-override">Floors</label>
+            <input id="floor-override" type="number" min="3" max="18" placeholder="3d6" title="Leave blank for random (3d6). Range: 3–18.">
+        </div>
+        <button id="generate-btn">GENERATE</button>
+        <button id="share-btn" class="hidden" title="Copy shareable link to clipboard">SHARE</button>
+            <button id="dm-toggle" title="Toggle DM Mode — reveal all floors">DM MODE</button>
+    </div>
+</section>
+
+<!-- Session bar — multiplayer controls -->
+<section id="session-bar">
+    <div class="session-row">
+        <button id="host-btn" class="session-btn" title="Host a multiplayer session">HOST</button>
+        <button id="join-btn" class="session-btn" title="Join an existing session">JOIN</button>
+
+        <!-- Shown when hosting -->
+        <div id="session-host-info" class="hidden">
+            <span class="session-label">SESSION</span>
+            <span id="session-code" class="session-code"></span>
+            <div id="session-status" class="session-status">
+                <span class="status-dot"></span>
+                <span class="status-text">Waiting for player...</span>
+            </div>
+            <button id="session-end-btn" class="session-btn">END</button>
+        </div>
+
+        <!-- Shown when joining -->
+        <div id="session-join-form" class="hidden">
+            <input id="join-code-input" type="text" maxlength="6" placeholder="CODE" autocomplete="off" spellcheck="false">
+            <button id="join-go-btn" class="session-btn">CONNECT</button>
+            <button id="join-cancel-btn" class="session-btn">CANCEL</button>
+        </div>
+
+        <!-- Shown after joined -->
+        <div id="session-player-info" class="hidden">
+            <span class="session-label">CONNECTED</span>
+            <span id="session-player-code" class="session-code"></span>
+            <button id="session-leave-btn" class="session-btn">LEAVE</button>
+        </div>
+    </div>
+</section>
+
+<section id="advanced-options">
+    <button id="adv-toggle" type="button">
+        <span class="adv-arrow">&#9654;</span> Advanced Options
+    </button>
+    <div id="adv-panel" class="adv-collapsed">
+        <div class="adv-group">
+            <div class="adv-group-header">
+                <span class="adv-group-label">Anti-Personnel ICE</span>
+                <button class="adv-group-toggle" data-group="ap" type="button">NONE</button>
+            </div>
+            <div class="adv-items">
+                <label class="adv-item"><input type="checkbox" data-filter="Asp" checked><span class="adv-swatch ice-ap"></span>Asp</label>
+                <label class="adv-item"><input type="checkbox" data-filter="Giant" checked><span class="adv-swatch ice-ap"></span>Giant</label>
+                <label class="adv-item"><input type="checkbox" data-filter="Hellhound" checked><span class="adv-swatch ice-ap"></span>Hellhound</label>
+                <label class="adv-item"><input type="checkbox" data-filter="Kraken" checked><span class="adv-swatch ice-ap"></span>Kraken</label>
+                <label class="adv-item"><input type="checkbox" data-filter="Liche" checked><span class="adv-swatch ice-ap"></span>Liche</label>
+                <label class="adv-item"><input type="checkbox" data-filter="Raven" checked><span class="adv-swatch ice-ap"></span>Raven</label>
+                <label class="adv-item"><input type="checkbox" data-filter="Scorpion" checked><span class="adv-swatch ice-ap"></span>Scorpion</label>
+                <label class="adv-item"><input type="checkbox" data-filter="Skunk" checked><span class="adv-swatch ice-ap"></span>Skunk</label>
+                <label class="adv-item"><input type="checkbox" data-filter="Wisp" checked><span class="adv-swatch ice-ap"></span>Wisp</label>
+            </div>
+        </div>
+        <div class="adv-group">
+            <div class="adv-group-header">
+                <span class="adv-group-label">Anti-Program ICE</span>
+                <button class="adv-group-toggle" data-group="prog" type="button">NONE</button>
+            </div>
+            <div class="adv-items">
+                <label class="adv-item"><input type="checkbox" data-filter="Dragon" checked><span class="adv-swatch ice-prog"></span>Dragon</label>
+                <label class="adv-item"><input type="checkbox" data-filter="Killer" checked><span class="adv-swatch ice-prog"></span>Killer</label>
+                <label class="adv-item"><input type="checkbox" data-filter="Sabertooth" checked><span class="adv-swatch ice-prog"></span>Sabertooth</label>
+            </div>
+        </div>
+        <div class="adv-group">
+            <div class="adv-group-header">
+                <span class="adv-group-label">Content Types</span>
+                <button class="adv-group-toggle" data-group="content" type="button">NONE</button>
+            </div>
+            <div class="adv-items">
+                <label class="adv-item"><input type="checkbox" data-filter="password" checked><span class="adv-swatch ct-password"></span>Password</label>
+                <label class="adv-item"><input type="checkbox" data-filter="file" checked><span class="adv-swatch ct-file"></span>File</label>
+                <label class="adv-item"><input type="checkbox" data-filter="control_node" checked><span class="adv-swatch ct-control"></span>Control Node</label>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div id="summary" class="hidden"></div>
+
+<main id="main">
+    <div id="arch-scroll">
+        <div id="arch-container"></div>
+    </div>
+
+    <aside id="detail-panel">
+        <div class="detail-top">
+            <span class="detail-title">Floor Details</span>
+            <button id="detail-close">&times;</button>
+        </div>
+        <div id="detail-body"></div>
+    </aside>
+
+    <!-- Action Log — visible in multiplayer -->
+    <aside id="action-log" class="hidden">
+        <div class="log-header">
+            <span class="log-title">Action Log</span>
+            <button id="log-toggle-btn" class="log-collapse-btn" title="Collapse log">&#9660;</button>
+        </div>
+        <div id="log-entries"></div>
+    </aside>
+</main>
+
+<!-- Player action bar — fixed bottom, visible in player mode -->
+<div id="player-bar" class="hidden">
+    <div class="player-bar-inner">
+        <span id="player-pos-label" class="player-pos-label">Floor 1</span>
+        <div class="player-actions">
+            <button id="move-btn" class="player-action" title="Move to next floor">MOVE &#9660;</button>
+            <button id="jackout-btn" class="player-action jackout" title="Jack out of the NET">JACK OUT</button>
+        </div>
+    </div>
+</div>
+
+<!-- Branch selection modal -->
+<div id="branch-modal" class="hidden">
+    <div class="branch-modal-inner">
+        <div class="branch-modal-title">Choose Path</div>
+        <div id="branch-options"></div>
+        <button id="branch-cancel-btn" class="session-btn">CANCEL</button>
+    </div>
+</div>
+
+<!-- Firebase SDK (compat builds for IIFE usage) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+
+<script src="js/tables.js"></script>
+<script src="js/generator.js"></script>
+<script src="js/renderer.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/session.js"></script>
+<script src="js/game-state.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# Development tools
+.claude/
+serve.py
+
+# Copyrighted reference material — DO NOT publish
+Rules/
