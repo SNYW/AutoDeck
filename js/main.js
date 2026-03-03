@@ -14,13 +14,13 @@
     const FILTER_KEYS = [
         'Asp', 'Giant', 'Hellhound', 'Kraken', 'Liche', 'Raven', 'Scorpion', 'Skunk', 'Wisp',
         'Dragon', 'Killer', 'Sabertooth',
-        'password', 'file', 'control_node'
+        'password', 'file', 'control_node', 'empty'
     ];
 
     const GROUP_MAP = {
         ap:      ['Asp', 'Giant', 'Hellhound', 'Kraken', 'Liche', 'Raven', 'Scorpion', 'Skunk', 'Wisp'],
         prog:    ['Dragon', 'Killer', 'Sabertooth'],
-        content: ['password', 'file', 'control_node']
+        content: ['password', 'file', 'control_node', 'empty']
     };
 
     // ---- Filter bitmask encode/decode ----
@@ -480,28 +480,16 @@
             return;
         }
 
-        // Check move availability
+        // Check move availability — filter to only revealed adjacent floors
         const moves = GameState.getNextMoves();
-        const atBottom = GameState.isAtBottom();
+        const available = moves.filter(m => GameState.isRevealed(m.branch, m.floor));
 
-        if (atBottom) {
-            moveBtn.disabled = true;
-            moveBtn.textContent = 'BOTTOM';
-        } else if (moves.length === 0) {
+        if (available.length === 0) {
             moveBtn.disabled = true;
             moveBtn.textContent = 'WAITING...';
         } else {
-            // Check if all target floors are revealed
-            const anyRevealed = moves.some(m =>
-                GameState.isRevealed(m.branch, m.floor)
-            );
-            if (!anyRevealed) {
-                moveBtn.disabled = true;
-                moveBtn.textContent = 'WAITING...';
-            } else {
-                moveBtn.disabled = false;
-                moveBtn.textContent = 'MOVE \u25BC';
-            }
+            moveBtn.disabled = false;
+            moveBtn.textContent = 'MOVE';
         }
 
         jackoutBtn.disabled = false;

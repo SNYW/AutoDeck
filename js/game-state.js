@@ -110,33 +110,44 @@ const GameState = (() => {
         return { success: true };
     }
 
-    // ---- Get next move options from current position ----
-    // Returns array of { branch, floor, label } the player can move to
+    // ---- Get adjacent move options from current position ----
+    // Returns array of { branch, floor, label } the player can move to.
+    // Movement is bidirectional: up, down, and across branch junctions.
     function getNextMoves() {
         if (!arch || jackedOut) return [];
 
         const moves = [];
         const curBranch = arch.branches[playerPos.branch];
-        const nextFloor = playerPos.floor + 1;
 
-        // Can move deeper in current branch?
+        // ---- Move DOWN (deeper) in current branch ----
+        const nextFloor = playerPos.floor + 1;
         if (nextFloor < curBranch.floors.length) {
             const label = curBranch.isMain
                 ? 'Floor ' + (nextFloor + 1)
                 : curBranch.name + ' Floor ' + (nextFloor + 1);
-            moves.push({
-                branch: playerPos.branch,
-                floor: nextFloor,
-                label: label
-            });
+            moves.push({ branch: playerPos.branch, floor: nextFloor, label });
         }
 
-        // Are we on the main branch at a fork point?
+        // ---- Move UP (shallower) in current branch ----
+        const prevFloor = playerPos.floor - 1;
+        if (prevFloor >= 0) {
+            const label = curBranch.isMain
+                ? 'Floor ' + (prevFloor + 1)
+                : curBranch.name + ' Floor ' + (prevFloor + 1);
+            moves.push({ branch: playerPos.branch, floor: prevFloor, label });
+        }
+
+        // ---- Cross-branch movement ----
         if (playerPos.branch === 0) {
+            // On main branch: can enter any side branch that forks at
+            // the floor immediately after this one (forkAfterFloor matches floor+1)
+            const mainRow = playerPos.floor;
             arch.branches.forEach((b, bIdx) => {
-                if (bIdx === 0) return; // skip main
-                // Branch forks after this floor index
-                if (b.forkAfterFloor === playerPos.floor + 1) {
+                if (bIdx === 0) return;
+                // Side branch's first card is at row forkAfterFloor,
+                // so it's adjacent to main floor at row forkAfterFloor
+                // (i.e. same row or connected row).
+                if (b.forkAfterFloor === mainRow + 1 || b.forkAfterFloor === mainRow) {
                     moves.push({
                         branch: bIdx,
                         floor: 0,
@@ -144,6 +155,20 @@ const GameState = (() => {
                     });
                 }
             });
+        } else {
+            // On a side branch: can move back to the main branch
+            // at the fork point (floor 0 of side branch connects to
+            // main branch floor at forkAfterFloor)
+            if (playerPos.floor === 0 && curBranch.forkAfterFloor != null) {
+                const mainFloor = curBranch.forkAfterFloor;
+                // Connect to the main floor at the fork row
+                // forkAfterFloor is the row index; for the main branch,
+                // row index equals floor index
+                if (mainFloor > 0) {
+                    const label = 'Main Floor ' + mainFloor;
+                    moves.push({ branch: 0, floor: mainFloor - 1, label });
+                }
+            }
         }
 
         return moves;

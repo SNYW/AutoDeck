@@ -24,6 +24,7 @@ const Renderer = (() => {
                 return content.entries
                     .map(e => e.count > 1 ? `${e.name} \u00d7${e.count}` : e.name)
                     .join(', ');
+            case 'empty':        return 'Empty';
         }
     }
 
@@ -31,6 +32,7 @@ const Renderer = (() => {
         if (content.type === 'file')         return 'Data File';
         if (content.type === 'password')     return 'Password Gate';
         if (content.type === 'control_node') return 'Control Node';
+        if (content.type === 'empty')        return 'No Content';
         if (content.type === 'black_ice') {
             const cats = new Set(content.entries.map(e => TABLES.ICE_CATEGORY[e.name]));
             if (cats.has('anti_personnel') && cats.has('anti_program')) return 'Mixed Black ICE';
@@ -43,6 +45,7 @@ const Renderer = (() => {
         if (content.type === 'file')         return 'type-file';
         if (content.type === 'password')     return 'type-password';
         if (content.type === 'control_node') return 'type-control';
+        if (content.type === 'empty')        return 'type-empty';
         if (content.type === 'black_ice') {
             const cats = new Set(content.entries.map(e => TABLES.ICE_CATEGORY[e.name]));
             if (cats.has('anti_program') && !cats.has('anti_personnel')) return 'type-ice-prog';
@@ -54,6 +57,7 @@ const Renderer = (() => {
         if (content.type === 'file')         return '\u2b26'; // ⬦
         if (content.type === 'password')     return '\u26bf'; // ⚿
         if (content.type === 'control_node') return '\u2b23'; // ⬣
+        if (content.type === 'empty')        return '\u25c7'; // ◇
         if (content.type === 'black_ice') {
             const cats = new Set(content.entries.map(e => TABLES.ICE_CATEGORY[e.name]));
             if (cats.has('anti_program')) return '\u2620'; // ☠
@@ -353,7 +357,8 @@ const Renderer = (() => {
             { value: 'password', text: 'Password' },
             { value: 'file', text: 'File' },
             { value: 'control_node', text: 'Control Node' },
-            { value: 'black_ice', text: 'Black ICE' }
+            { value: 'black_ice', text: 'Black ICE' },
+            { value: 'empty', text: 'Empty' }
         ].forEach(opt => {
             const o = document.createElement('option');
             o.value = opt.value;
@@ -419,6 +424,11 @@ const Renderer = (() => {
         function buildSubSection(type) {
             subSection.innerHTML = '';
 
+            if (type === 'empty') {
+                // No sub-options for empty floors
+                return;
+            }
+
             if (type === 'password' || type === 'file' || type === 'control_node') {
                 const dvRow = document.createElement('div');
                 dvRow.className = 'det-edit-row';
@@ -467,7 +477,9 @@ const Renderer = (() => {
             const type = typeSelect.value;
             let newContent;
 
-            if (type === 'black_ice') {
+            if (type === 'empty') {
+                newContent = { type: 'empty' };
+            } else if (type === 'black_ice') {
                 const entries = [];
                 subSection.querySelectorAll('.det-ice-entry').forEach(row => {
                     const name = row.querySelector('.det-ice-name-select').value;
@@ -549,6 +561,10 @@ const Renderer = (() => {
                 <p class="det-note">Once controlled, operating each device costs 1 NET Action. Each node activates once per Turn.</p>
                 <label class="det-label">Connected Systems (GM Notes)</label>
                 <textarea class="det-textarea" placeholder="e.g., Security cameras, turret, elevator lock..."></textarea>
+            </div>`;
+        } else if (content.type === 'empty') {
+            html += `<div class="det-section">
+                <p class="det-note">This floor is empty — no ICE, no files, no passwords. Just dead architecture.</p>
             </div>`;
         } else if (content.type === 'black_ice') {
             content.entries.forEach(entry => {

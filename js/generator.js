@@ -76,7 +76,13 @@ const Generator = (() => {
     }
 
     // Roll a body floor (3d6), re-rolling filtered or duplicate results
+    // ~15% chance to produce an empty architectural floor instead
     function rollBody(difficulty, usedKeys, disabledSet) {
+        // Check for empty floor (~15% chance)
+        if (rng() < 0.15 && !(disabledSet && disabledSet.has('empty'))) {
+            return { content: { type: 'empty' }, roll: null, dice: null, table: 'empty' };
+        }
+
         for (let attempt = 0; attempt < 20; attempt++) {
             const dice = rollDice(3, 6);
             const total = sumDice(dice);

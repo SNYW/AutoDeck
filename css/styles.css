@@ -10,9 +10,9 @@
     --bg-card:     #0c0c0e;
     --border:      #1a1a1e;
     --border-hi:   #2a1015;
-    --text:        #c8c8c8;
-    --text-dim:    #78787f;
-    --text-bright: #ececec;
+    --text:        #e0e0e0;
+    --text-dim:    #a0a0a5;
+    --text-bright: #f5f5f5;
     --accent:      #dc143c;
     --accent-dim:  rgba(220,20,60,0.12);
     --accent-glow: rgba(220,20,60,0.35);
@@ -21,6 +21,7 @@
     --password:    #e08020;
     --file:        #5898c8;
     --control:     #30c060;
+    --empty:       #555560;
     --bottom:      #ff0050;
 }
 
@@ -307,6 +308,7 @@ body::before {
 .floor-card.type-password  { --type-border: var(--password); }
 .floor-card.type-file      { --type-border: var(--file); }
 .floor-card.type-control   { --type-border: var(--control); }
+.floor-card.type-empty     { --type-border: var(--empty); }
 
 /* Bottom highlight */
 .floor-card.is-bottom {
@@ -332,6 +334,7 @@ body::before {
 .type-password  .card-icon { color: var(--password); }
 .type-file      .card-icon { color: var(--file); }
 .type-control   .card-icon { color: var(--control); }
+.type-empty     .card-icon { color: var(--empty); }
 
 .card-text {
     display: flex;
@@ -597,6 +600,7 @@ body.dm-mode .floor-card.floor-hidden .card-mystery {
 .adv-swatch.ct-password { background: var(--password); }
 .adv-swatch.ct-file     { background: var(--file); }
 .adv-swatch.ct-control  { background: var(--control); }
+.adv-swatch.ct-empty    { background: var(--empty); }
 
 /* --- Detail Panel --- */
 #detail-panel {
@@ -674,6 +678,7 @@ body.dm-mode .floor-card.floor-hidden .card-mystery {
 .det-header.type-password  .det-icon { color: var(--password); }
 .det-header.type-file      .det-icon { color: var(--file); }
 .det-header.type-control   .det-icon { color: var(--control); }
+.det-header.type-empty     .det-icon { color: var(--empty); }
 
 .det-title {
     font-size: 1rem;
@@ -1305,18 +1310,18 @@ body.mode-host .floor-card.floor-revealed.player-here .card-revealed-badge {
     width: 300px;
     max-height: 280px;
     background: var(--bg2);
-    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
     border-top: 1px solid var(--border);
     display: flex;
     flex-direction: column;
     z-index: 350;
+    overflow: hidden;
 }
 #action-log.hidden {
     display: none;
 }
 #action-log.collapsed {
     max-height: 32px;
-    overflow: hidden;
 }
 .log-header {
     display: flex;
@@ -1385,7 +1390,7 @@ body.mode-host #action-log {
     bottom: 0;
 }
 body.mode-player #action-log {
-    bottom: 60px;
+    bottom: 68px;
 }
 
 /* --- Responsive --- */
@@ -1425,6 +1430,9 @@ body.mode-player #action-log {
     }
     #action-log {
         width: 100%;
-        max-height: 200px;
+        max-height: 160px;
+    }
+    body.mode-player #action-log {
+        bottom: 120px;
     }
 }

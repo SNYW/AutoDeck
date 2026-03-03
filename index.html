@@ -107,6 +107,7 @@
                 <label class="adv-item"><input type="checkbox" data-filter="password" checked><span class="adv-swatch ct-password"></span>Password</label>
                 <label class="adv-item"><input type="checkbox" data-filter="file" checked><span class="adv-swatch ct-file"></span>File</label>
                 <label class="adv-item"><input type="checkbox" data-filter="control_node" checked><span class="adv-swatch ct-control"></span>Control Node</label>
+                <label class="adv-item"><input type="checkbox" data-filter="empty" checked><span class="adv-swatch ct-empty"></span>Empty</label>
             </div>
         </div>
     </div>
@@ -126,23 +127,23 @@
         </div>
         <div id="detail-body"></div>
     </aside>
-
-    <!-- Action Log — visible in multiplayer -->
-    <aside id="action-log" class="hidden">
-        <div class="log-header">
-            <span class="log-title">Action Log</span>
-            <button id="log-toggle-btn" class="log-collapse-btn" title="Collapse log">&#9660;</button>
-        </div>
-        <div id="log-entries"></div>
-    </aside>
 </main>
+
+<!-- Action Log — visible in multiplayer (outside #main to avoid flex conflicts) -->
+<aside id="action-log" class="hidden">
+    <div class="log-header">
+        <span class="log-title">Action Log</span>
+        <button id="log-toggle-btn" class="log-collapse-btn" title="Collapse log">&#9660;</button>
+    </div>
+    <div id="log-entries"></div>
+</aside>
 
 <!-- Player action bar — fixed bottom, visible in player mode -->
 <div id="player-bar" class="hidden">
     <div class="player-bar-inner">
         <span id="player-pos-label" class="player-pos-label">Floor 1</span>
         <div class="player-actions">
-            <button id="move-btn" class="player-action" title="Move to next floor">MOVE &#9660;</button>
+            <button id="move-btn" class="player-action" title="Move to an adjacent floor">MOVE</button>
             <button id="jackout-btn" class="player-action jackout" title="Jack out of the NET">JACK OUT</button>
         </div>
     </div>
