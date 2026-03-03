@@ -8,6 +8,7 @@
 
     const diffBtns = document.querySelectorAll('.diff-btn');
     const floorInput = document.getElementById('floor-override');
+    const branchInput = document.getElementById('branch-override');
     const shareBtn = document.getElementById('share-btn');
 
     // ---- Filter key order (stable for bitmask URL encoding) ----
@@ -56,15 +57,17 @@
             difficulty: p.get('d'),
             seed: p.get('s') != null ? parseInt(p.get('s'), 36) : null,
             floors: p.get('f') != null ? parseInt(p.get('f'), 10) : null,
+            branches: p.get('b') != null ? parseInt(p.get('b'), 10) : null,
             disabled: decodeFilters(p.get('x'))
         };
     }
 
-    function writeURL(arch, floorOverride) {
+    function writeURL(arch, floorOverride, branchOverride) {
         const p = new URLSearchParams();
         p.set('d', arch.difficulty);
         p.set('s', arch.seed.toString(36));
         if (floorOverride != null) p.set('f', floorOverride.toString());
+        if (branchOverride != null) p.set('b', branchOverride.toString());
         const filterParam = encodeFilters(
             arch.disabledKeys && arch.disabledKeys.length > 0
                 ? new Set(arch.disabledKeys) : null
@@ -83,7 +86,8 @@
         Renderer.render(arch, appMode);
 
         const floorOverride = (opts.floorOverride != null) ? opts.floorOverride : null;
-        writeURL(arch, floorOverride);
+        const branchOverride = (opts.branchOverride != null) ? opts.branchOverride : null;
+        writeURL(arch, floorOverride, branchOverride);
         shareBtn.classList.remove('hidden');
     }
 
@@ -100,9 +104,11 @@
     // ---- Generate button ----
     document.getElementById('generate-btn').addEventListener('click', () => {
         if (appMode === 'host') return; // locked during session
-        const raw = floorInput.value.trim();
-        const floorOverride = raw !== '' ? parseInt(raw, 10) : null;
-        doGenerate({ floorOverride });
+        const rawFloors = floorInput.value.trim();
+        const floorOverride = rawFloors !== '' ? parseInt(rawFloors, 10) : null;
+        const rawBranches = branchInput.value.trim();
+        const branchOverride = rawBranches !== '' ? parseInt(rawBranches, 10) : null;
+        doGenerate({ floorOverride, branchOverride });
     });
 
     // ---- Share button ----
@@ -250,6 +256,9 @@
             actionLog.classList.remove('hidden');
             hostBtn.style.display = 'none';
             joinBtn.style.display = 'none';
+            // Force-disable DM mode — players must not see hidden floors or edit controls
+            document.body.classList.remove('dm-mode');
+            dmToggle.classList.remove('active');
         }
     }
 
@@ -260,20 +269,19 @@
             return;
         }
 
-        // Generate fresh architecture
-        const raw = floorInput.value.trim();
-        const floorOverride = raw !== '' ? parseInt(raw, 10) : null;
-        const opts = { floorOverride };
-        opts.disabled = currentDisabled.size > 0 ? currentDisabled : null;
-        const arch = Generator.generate(currentDifficulty, opts);
-        currentArch = arch;
+        // Use the current architecture already on screen
+        if (!currentArch) {
+            alert('Generate an architecture first, then press HOST.');
+            return;
+        }
+        const arch = currentArch;
 
         try {
             const code = await Session.create(arch);
             sessionCodeEl.textContent = code;
             setMode('host');
 
-            // Render for host
+            // Re-render in host mode (preserves the same architecture)
             Renderer.render(arch, 'host');
 
             // Listen for state changes (player position, etc.)
@@ -578,11 +586,12 @@
             const time = entry.t ? new Date(entry.t) : null;
             const timeStr = time ? time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '';
 
-            // Classify message for styling
+            // Classify message for styling (use log-* prefix to avoid
+            // collisions with .player-action button styles)
             let msgClass = '';
-            if (entry.msg.startsWith('DM')) msgClass = 'dm-action';
-            else if (entry.msg.startsWith('Runner JACKED')) msgClass = 'jackout-action';
-            else if (entry.msg.startsWith('Runner')) msgClass = 'player-action';
+            if (entry.msg.startsWith('DM')) msgClass = 'log-dm';
+            else if (entry.msg.startsWith('Runner JACKED')) msgClass = 'log-jackout';
+            else if (entry.msg.startsWith('Runner')) msgClass = 'log-player';
 
             div.innerHTML = `<span class="log-time">${timeStr}</span><span class="log-msg ${msgClass}">${entry.msg}</span>`;
             logEntries.appendChild(div);
@@ -607,6 +616,9 @@
     if (url.floors != null) {
         floorInput.value = url.floors;
     }
+    if (url.branches != null) {
+        branchInput.value = url.branches;
+    }
     if (url.disabled) {
         currentDisabled = url.disabled;
         syncCheckboxes();
@@ -618,6 +630,7 @@
 
     doGenerate({
         seed: url.seed,
-        floorOverride: url.floors
+        floorOverride: url.floors,
+        branchOverride: url.branches
     });
 })();

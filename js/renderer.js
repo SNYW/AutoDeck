@@ -209,7 +209,7 @@ const Renderer = (() => {
                 <span class="card-sub">${floorSubLabel(content)}</span>
             </div>
             ${isBottom ? '<span class="card-bottom" title="Bottom — Virus deployment point">BOTTOM</span>' : ''}
-            ${floor.isLobby ? '<span class="card-lobby">LOBBY</span>' : ''}
+            ${floor.isLobby ? '<span class="card-lobby" title="Lobby Floor">L</span>' : ''}
             <span class="card-mystery">? ? ?</span>
             <span class="card-revealed-badge"><span class="badge-icon">👁</span> VISIBLE</span>
         `;
@@ -610,8 +610,9 @@ const Renderer = (() => {
 
         body.innerHTML = html;
 
-        // Show edit section in host mode OR solo DM mode
-        const isDM = currentMode === 'host' || document.body.classList.contains('dm-mode');
+        // Show edit section in host mode OR solo DM mode (never for players)
+        const isDM = currentMode !== 'player' &&
+            (currentMode === 'host' || document.body.classList.contains('dm-mode'));
         if (isDM && branchIdx !== undefined) {
             body.appendChild(buildEditSection(content, branchIdx, floorIdx, branch, isBottom));
         }

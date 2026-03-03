@@ -139,15 +139,12 @@ const GameState = (() => {
 
         // ---- Cross-branch movement ----
         if (playerPos.branch === 0) {
-            // On main branch: can enter any side branch that forks at
-            // the floor immediately after this one (forkAfterFloor matches floor+1)
-            const mainRow = playerPos.floor;
+            // On main branch: can enter any side branch whose fork
+            // connects at this exact row. The fork line joins
+            // main floor at row forkAfterFloor to the branch's floor 0.
             arch.branches.forEach((b, bIdx) => {
                 if (bIdx === 0) return;
-                // Side branch's first card is at row forkAfterFloor,
-                // so it's adjacent to main floor at row forkAfterFloor
-                // (i.e. same row or connected row).
-                if (b.forkAfterFloor === mainRow + 1 || b.forkAfterFloor === mainRow) {
+                if (b.forkAfterFloor === playerPos.floor) {
                     moves.push({
                         branch: bIdx,
                         floor: 0,
@@ -156,18 +153,13 @@ const GameState = (() => {
                 }
             });
         } else {
-            // On a side branch: can move back to the main branch
-            // at the fork point (floor 0 of side branch connects to
-            // main branch floor at forkAfterFloor)
+            // On a side branch floor 0: can move back to the main
+            // branch at the fork point. forkAfterFloor is the row
+            // index, which equals the floor index on the main branch.
             if (playerPos.floor === 0 && curBranch.forkAfterFloor != null) {
-                const mainFloor = curBranch.forkAfterFloor;
-                // Connect to the main floor at the fork row
-                // forkAfterFloor is the row index; for the main branch,
-                // row index equals floor index
-                if (mainFloor > 0) {
-                    const label = 'Main Floor ' + mainFloor;
-                    moves.push({ branch: 0, floor: mainFloor - 1, label });
-                }
+                const mainFloorIdx = curBranch.forkAfterFloor;
+                const label = 'Main Floor ' + (mainFloorIdx + 1);
+                moves.push({ branch: 0, floor: mainFloorIdx, label });
             }
         }
 

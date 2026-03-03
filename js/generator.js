@@ -101,6 +101,7 @@ const Generator = (() => {
 
     // ---- Main generation entry point ----
     // opts.floorOverride — fixed floor count (3–18), or null for random 3d6
+    // opts.branchOverride — fixed branch count (0–15), or null for random 1d10
     // opts.seed — 32-bit seed for reproducible generation, or null for random
     // opts.disabled — Set of disabled filter keys, or null for no filtering
     function generate(difficulty, opts) {
@@ -122,20 +123,28 @@ const Generator = (() => {
             totalFloors = sumDice(floorDice);
         }
 
-        // Step 1b: determine branches (1d10, 7+ = branch, keep rolling)
-        const branchRolls = [];
+        // Step 1b: determine branches (override or 1d10, 7+ = branch)
+        let branchRolls = [];
         let numBranches = 0;
-        let bRoll = rollDie(10);
-        branchRolls.push(bRoll);
-        while (bRoll >= 7) {
-            numBranches++;
-            bRoll = rollDie(10);
-            branchRolls.push(bRoll);
-        }
 
-        // Enforce minimums: main needs >=3, each branch >=1
-        while (numBranches > 0 && totalFloors < 3 + numBranches) {
-            numBranches--;
+        if (opts.branchOverride != null) {
+            // Override: use the requested count, clamped to what's possible
+            const maxPossible = Math.max(0, totalFloors - 3);
+            numBranches = Math.max(0, Math.min(opts.branchOverride, maxPossible));
+            branchRolls = null; // no dice when overridden
+        } else {
+            let bRoll = rollDie(10);
+            branchRolls.push(bRoll);
+            while (bRoll >= 7) {
+                numBranches++;
+                bRoll = rollDie(10);
+                branchRolls.push(bRoll);
+            }
+
+            // Enforce minimums: main needs >=3, each branch >=1
+            while (numBranches > 0 && totalFloors < 3 + numBranches) {
+                numBranches--;
+            }
         }
 
         // Step 1c: distribute floors among main + branches

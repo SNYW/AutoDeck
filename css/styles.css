@@ -144,6 +144,31 @@ body::before {
     -webkit-appearance: none;
     margin: 0;
 }
+#branch-override {
+    width: 56px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--accent);
+    font-family: inherit;
+    font-size: 0.82rem;
+    padding: 6px 8px;
+    text-align: center;
+    -moz-appearance: textfield;
+}
+#branch-override::placeholder {
+    color: var(--text-dim);
+    opacity: 0.5;
+}
+#branch-override:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 6px var(--accent-dim);
+}
+#branch-override::-webkit-inner-spin-button,
+#branch-override::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
 
 .diff-btn {
     background: transparent;
@@ -373,12 +398,17 @@ body::before {
 }
 .card-lobby {
     font-size: 0.55rem;
+    font-weight: 700;
     color: var(--text-dim);
     background: rgba(255,255,255,0.03);
     border: 1px solid var(--border);
-    padding: 2px 5px;
-    border-radius: 0;
-    letter-spacing: 1px;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    letter-spacing: 0;
     white-space: nowrap;
 }
 
@@ -1468,13 +1498,13 @@ body.mode-host .floor-card.floor-revealed.player-here .card-revealed-badge {
 .log-entry .log-msg {
     color: var(--text);
 }
-.log-entry .log-msg.dm-action {
+.log-entry .log-msg.log-dm {
     color: var(--accent);
 }
-.log-entry .log-msg.player-action {
+.log-entry .log-msg.log-player {
     color: var(--control);
 }
-.log-entry .log-msg.jackout-action {
+.log-entry .log-msg.log-jackout {
     color: var(--password);
 }
 
