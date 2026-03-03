@@ -240,6 +240,7 @@ const Renderer = (() => {
 
             // Solo mode — original behavior
             if (el.classList.contains('floor-hidden') && !document.body.classList.contains('dm-mode')) {
+                triggerReveal(el, 'floor-revealing');
                 el.classList.remove('floor-hidden');
                 return;
             }
@@ -250,6 +251,15 @@ const Renderer = (() => {
         });
 
         return el;
+    }
+
+    // ---- Trigger cyberpunk reveal animation on an element ----
+    function triggerReveal(el, className) {
+        el.classList.add(className);
+        el.addEventListener('animationend', function handler() {
+            el.classList.remove(className);
+            el.removeEventListener('animationend', handler);
+        }, { once: true });
     }
 
     // ---- Update floor visibility & player position from Firebase state ----
@@ -264,7 +274,9 @@ const Renderer = (() => {
             if (currentMode === 'player') {
                 // Player: floors are hidden unless in revealedMap
                 if (revealedMap && revealedMap[key]) {
+                    const isNewReveal = el.classList.contains('floor-hidden');
                     el.classList.remove('floor-hidden');
+                    if (isNewReveal) triggerReveal(el, 'floor-revealing');
                 } else {
                     el.classList.add('floor-hidden');
                 }
@@ -274,8 +286,10 @@ const Renderer = (() => {
                 // the click handler can distinguish revealed vs unrevealed.
                 // Also toggle floor-revealed for the eye badge indicator.
                 if (revealedMap && revealedMap[key]) {
+                    const isNewReveal = el.classList.contains('floor-hidden');
                     el.classList.remove('floor-hidden');
                     el.classList.add('floor-revealed');
+                    if (isNewReveal) triggerReveal(el, 'floor-revealing');
                 } else {
                     el.classList.remove('floor-revealed');
                 }
@@ -293,7 +307,9 @@ const Renderer = (() => {
                 const bothRevealed = revealedMap &&
                     revealedMap[from] && revealedMap[to];
                 if (bothRevealed) {
+                    const isNewReveal = el.classList.contains('conn-hidden');
                     el.classList.remove('conn-hidden');
+                    if (isNewReveal) triggerReveal(el, 'conn-revealing');
                 } else {
                     el.classList.add('conn-hidden');
                 }
