@@ -1317,29 +1317,52 @@ body.mode-player .conn-fork.conn-hidden {
 
 /* --- Player Position Marker on Cards --- */
 .floor-card.player-here {
-    border-color: var(--accent);
-    box-shadow: 0 0 16px var(--accent-glow), 0 0 30px rgba(220,20,60,0.15);
-    animation: pulse-runner 2s ease infinite;
+    border: 2px solid var(--accent) !important;
+    box-shadow:
+        0 0 12px var(--accent-glow),
+        0 0 28px rgba(220,20,60,0.3),
+        0 0 56px rgba(220,20,60,0.12),
+        inset 0 0 18px rgba(220,20,60,0.06);
+    animation: pulse-runner 1.6s ease-in-out infinite;
+    z-index: 10;
 }
-.floor-card.player-here::after {
-    content: '▶ RUNNER';
+/* Floating RUNNER label above the card */
+.floor-card.player-here::before {
+    content: '\25B6  RUNNER';
     position: absolute;
-    right: 8px;
-    top: 50%;
-    transform: translateY(-50%);
+    bottom: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--accent);
+    color: #0a0a0f;
     font-size: 0.55rem;
-    font-weight: 700;
-    letter-spacing: 2px;
-    color: var(--accent);
-    background: rgba(220,20,60,0.12);
-    border: 1px solid rgba(220,20,60,0.3);
-    padding: 2px 6px;
+    font-weight: 800;
+    letter-spacing: 3px;
+    padding: 2px 12px;
     white-space: nowrap;
-    z-index: 2;
+    z-index: 11;
+    box-shadow: 0 0 10px var(--accent-glow), 0 2px 8px rgba(0,0,0,0.6);
+    animation: runner-tag-glow 1.6s ease-in-out infinite;
 }
 @keyframes pulse-runner {
-    0%, 100% { box-shadow: 0 0 12px var(--accent-glow), 0 0 24px rgba(220,20,60,0.1); }
-    50%      { box-shadow: 0 0 20px var(--accent-glow), 0 0 40px rgba(220,20,60,0.2); }
+    0%, 100% {
+        box-shadow:
+            0 0 12px var(--accent-glow),
+            0 0 28px rgba(220,20,60,0.3),
+            0 0 56px rgba(220,20,60,0.12),
+            inset 0 0 18px rgba(220,20,60,0.06);
+    }
+    50% {
+        box-shadow:
+            0 0 20px var(--accent-glow),
+            0 0 44px rgba(220,20,60,0.4),
+            0 0 72px rgba(220,20,60,0.18),
+            inset 0 0 24px rgba(220,20,60,0.09);
+    }
+}
+@keyframes runner-tag-glow {
+    0%, 100% { box-shadow: 0 0 10px var(--accent-glow), 0 2px 8px rgba(0,0,0,0.6); }
+    50%      { box-shadow: 0 0 18px var(--accent-glow), 0 2px 12px rgba(0,0,0,0.6); }
 }
 
 /* --- Revealed Indicator (Host/DM Mode) --- */
@@ -1367,12 +1390,7 @@ body.mode-host .floor-card.floor-revealed .card-revealed-badge {
 body.mode-host .floor-card.floor-revealed .card-revealed-badge .badge-icon {
     font-size: 0.6rem;
 }
-/* When RUNNER is also on a revealed floor, shift the revealed badge up-left */
-body.mode-host .floor-card.floor-revealed.player-here .card-revealed-badge {
-    right: auto;
-    left: 8px;
-    top: 4px;
-}
+/* No need to shift revealed badge — RUNNER label floats above the card */
 
 /* --- Branch Selection Modal --- */
 #branch-modal {

@@ -91,9 +91,17 @@ const GameState = (() => {
             return { success: false, reason: 'Floor not yet revealed by DM' };
         }
 
-        // Note: password floors block progress in the tabletop rules,
-        // but here the DM controls pacing by choosing when to reveal
-        // the next floor. No code-level blocking needed.
+        // Validate target is a legal adjacent move (safety guard)
+        const legalMoves = getNextMoves();
+        const isLegal = legalMoves.some(m =>
+            m.branch === targetBranch && m.floor === targetFloor
+        );
+        if (!isLegal) {
+            console.warn('[GameState] Rejected illegal move from',
+                playerPos, 'to', { branch: targetBranch, floor: targetFloor },
+                'Legal moves:', legalMoves);
+            return { success: false, reason: 'Not adjacent' };
+        }
 
         // Update position
         playerPos = { branch: targetBranch, floor: targetFloor };
@@ -110,14 +118,25 @@ const GameState = (() => {
         return { success: true };
     }
 
+    // ---- Compute the visual row for a given position ----
+    // Main branch floors start at row 0. Side branch floors start
+    // at row forkAfterFloor. This MUST match renderer.js computeLayout.
+    function getRow(branchIdx, floorIdx) {
+        const branch = arch.branches[branchIdx];
+        const startRow = branch.forkAfterFloor || 0;
+        return startRow + floorIdx;
+    }
+
     // ---- Get adjacent move options from current position ----
     // Returns array of { branch, floor, label } the player can move to.
     // Movement is bidirectional: up, down, and across branch junctions.
+    // Cross-branch moves are validated by matching visual rows.
     function getNextMoves() {
         if (!arch || jackedOut) return [];
 
         const moves = [];
         const curBranch = arch.branches[playerPos.branch];
+        const curRow = getRow(playerPos.branch, playerPos.floor);
 
         // ---- Move DOWN (deeper) in current branch ----
         const nextFloor = playerPos.floor + 1;
@@ -137,29 +156,37 @@ const GameState = (() => {
             moves.push({ branch: playerPos.branch, floor: prevFloor, label });
         }
 
-        // ---- Cross-branch movement ----
+        // ---- Cross-branch movement (horizontal only — same row) ----
         if (playerPos.branch === 0) {
             // On main branch: can enter any side branch whose fork
             // connects at this exact row. The fork line joins
             // main floor at row forkAfterFloor to the branch's floor 0.
             arch.branches.forEach((b, bIdx) => {
                 if (bIdx === 0) return;
-                if (b.forkAfterFloor === playerPos.floor) {
-                    moves.push({
-                        branch: bIdx,
-                        floor: 0,
-                        label: b.name + ' Floor 1'
-                    });
+                const forkRow = b.forkAfterFloor;
+                // Player must be at the exact main floor where the fork connects
+                if (forkRow === playerPos.floor) {
+                    // Double-check: branch floor 0 must be at the same visual row
+                    const targetRow = getRow(bIdx, 0);
+                    if (targetRow === curRow) {
+                        moves.push({
+                            branch: bIdx,
+                            floor: 0,
+                            label: b.name + ' Floor 1'
+                        });
+                    }
                 }
             });
         } else {
             // On a side branch floor 0: can move back to the main
-            // branch at the fork point. forkAfterFloor is the row
-            // index, which equals the floor index on the main branch.
+            // branch at the fork point — only if same visual row.
             if (playerPos.floor === 0 && curBranch.forkAfterFloor != null) {
                 const mainFloorIdx = curBranch.forkAfterFloor;
-                const label = 'Main Floor ' + (mainFloorIdx + 1);
-                moves.push({ branch: 0, floor: mainFloorIdx, label });
+                const targetRow = getRow(0, mainFloorIdx);
+                if (targetRow === curRow) {
+                    const label = 'Main Floor ' + (mainFloorIdx + 1);
+                    moves.push({ branch: 0, floor: mainFloorIdx, label });
+                }
             }
         }
 
