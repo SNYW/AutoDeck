@@ -1325,6 +1325,7 @@ body.mode-player .conn-fork.conn-hidden {
         inset 0 0 18px rgba(220,20,60,0.06);
     animation: pulse-runner 1.6s ease-in-out infinite;
     z-index: 10;
+    overflow: visible;
 }
 /* Floating RUNNER label above the card */
 .floor-card.player-here::before {
