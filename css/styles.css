@@ -170,29 +170,35 @@ body::before {
     margin: 0;
 }
 
-.diff-btn {
-    background: transparent;
+#diff-select {
+    background: var(--bg);
     border: 1px solid var(--border);
-    color: var(--text-dim);
-    padding: 6px 14px;
-    font-family: inherit;
-    font-size: 0.75rem;
-    cursor: pointer;
-    transition: all 0.15s;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-.diff-btn:hover {
-    border-color: var(--accent);
     color: var(--accent);
+    font-family: inherit;
+    font-size: 0.82rem;
+    padding: 6px 10px;
+    cursor: pointer;
+    transition: border-color 0.15s;
 }
-.diff-btn.active {
-    background: var(--accent);
+#diff-select:focus {
+    outline: none;
     border-color: var(--accent);
-    color: #000;
+    box-shadow: 0 0 6px var(--accent-dim);
+}
+#diff-select:hover {
+    border-color: var(--accent);
+}
+#diff-select option {
+    background: var(--bg);
+    color: var(--text);
+}
+.interface-rec-label {
+    font-size: 0.72rem;
+    color: var(--accent);
     font-weight: 700;
-    text-shadow: none;
-    box-shadow: 0 0 10px var(--accent-glow);
+    letter-spacing: 1px;
+    margin-left: 8px;
+    white-space: nowrap;
 }
 
 #generate-btn {
@@ -237,32 +243,6 @@ body::before {
     color: var(--control);
 }
 #share-btn.hidden { display: none; }
-
-/* --- Summary Bar --- */
-#summary {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px 16px;
-    padding: 8px 24px;
-    background: var(--bg);
-    border-bottom: 1px solid var(--border);
-    justify-content: center;
-    font-size: 0.72rem;
-}
-#summary.hidden { display: none; }
-.sum-item {
-    display: flex;
-    gap: 5px;
-}
-.sum-label {
-    color: var(--text-dim);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-.sum-val {
-    color: var(--accent);
-    font-weight: 700;
-}
 
 /* --- Main layout --- */
 #main {
@@ -546,8 +526,8 @@ body.mode-player .floor-card.floor-revealing {
     100% { }
 }
 
-/* DM Mode toggle */
-#dm-toggle {
+/* Structured mode toggle */
+#struct-toggle {
     background: transparent;
     border: 1px solid var(--border);
     color: var(--text-dim);
@@ -561,29 +541,15 @@ body.mode-player .floor-card.floor-revealing {
     transition: all 0.2s;
     white-space: nowrap;
 }
-#dm-toggle:hover {
+#struct-toggle:hover {
     border-color: var(--accent);
     color: var(--accent);
 }
-#dm-toggle.active {
+#struct-toggle.active {
     border-color: var(--accent);
     color: var(--accent);
     box-shadow: 0 0 10px var(--accent-dim);
     background: rgba(220,20,60,0.06);
-}
-
-/* DM Mode — reveal all hidden cards */
-body.dm-mode .floor-card.floor-hidden {
-    border-left-color: var(--type-border);
-}
-body.dm-mode .floor-card.floor-hidden .card-icon,
-body.dm-mode .floor-card.floor-hidden .card-text,
-body.dm-mode .floor-card.floor-hidden .card-bottom,
-body.dm-mode .floor-card.floor-hidden .card-lobby {
-    opacity: 1;
-}
-body.dm-mode .floor-card.floor-hidden .card-mystery {
-    opacity: 0;
 }
 
 /* --- Advanced Options Panel --- */
@@ -1080,19 +1046,16 @@ body.dm-mode .floor-card.floor-hidden .card-mystery {
     color: var(--text-dim);
 }
 
-/* --- Session Bar --- */
+/* --- Session Panel (centered when hosting/connected) --- */
 #session-bar {
-    padding: 10px 24px;
-    border-bottom: 1px solid var(--border);
-    background: var(--bg2);
-}
-.session-row {
-    max-width: 960px;
-    margin: 0 auto;
     display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
+    justify-content: center;
+    padding: 20px 24px;
+    background: rgba(10, 10, 10, 0.95);
+    border-bottom: 1px solid var(--border);
+}
+#session-bar.hidden {
+    display: none;
 }
 .session-btn {
     background: transparent;
@@ -1164,60 +1127,82 @@ body.dm-mode .floor-card.floor-hidden .card-mystery {
     50%      { opacity: 1; }
 }
 
-/* Join form input */
-#join-code-input {
-    width: 100px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    color: var(--accent);
-    font-family: inherit;
-    font-size: 1rem;
-    font-weight: 700;
-    letter-spacing: 4px;
-    padding: 6px 10px;
+/* Host session panel — centered card */
+#session-host-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 20px 32px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-hi);
+    box-shadow: 0 0 24px rgba(220,20,60,0.1);
+    max-width: 480px;
+    width: 100%;
     text-align: center;
-    text-transform: uppercase;
 }
-#join-code-input::placeholder {
+#session-host-info .session-code {
+    font-size: 1.6rem;
+    letter-spacing: 8px;
+}
+.session-actions {
+    display: flex;
+    gap: 8px;
+}
+#session-link-row {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+}
+.session-link-label {
+    font-size: 0.6rem;
+    letter-spacing: 2px;
     color: var(--text-dim);
-    opacity: 0.4;
-    letter-spacing: 4px;
+    text-transform: uppercase;
+    white-space: nowrap;
 }
-#join-code-input:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 8px var(--accent-dim);
+.session-link-text {
+    font-size: 0.7rem;
+    color: var(--accent);
+    letter-spacing: 1px;
+    word-break: break-all;
+    opacity: 0.7;
+    user-select: all;
+}
+#session-copy-link.copied {
+    border-color: var(--control);
+    color: var(--control);
 }
 
-#session-host-info,
-#session-join-form,
+/* Hide generation controls when hosting */
+body.mode-host #controls,
+body.mode-host #advanced-options {
+    display: none;
+}
+
+#session-host-info.hidden,
+#session-player-info.hidden {
+    display: none;
+}
 #session-player-info {
     display: flex;
     align-items: center;
     gap: 10px;
 }
-#session-host-info.hidden,
-#session-join-form.hidden,
-#session-player-info.hidden {
-    display: none;
-}
 
-/* Hide HOST/JOIN buttons when in a session */
+/* Hide HOST button when in a session */
 body.mode-host #host-btn,
-body.mode-host #join-btn,
-body.mode-player #host-btn,
-body.mode-player #join-btn {
+body.mode-player #host-btn {
     display: none;
 }
 
-/* Hide controls and summary in player mode */
+/* Hide controls in player mode */
 body.mode-player #controls {
     display: none;
 }
 body.mode-player #advanced-options {
-    display: none;
-}
-body.mode-player #summary {
     display: none;
 }
 
@@ -1560,9 +1545,6 @@ body.mode-player #action-log {
     #adv-panel {
         flex-direction: column;
         gap: 14px;
-    }
-    .session-row {
-        flex-wrap: wrap;
     }
     .player-bar-inner {
         flex-direction: column;

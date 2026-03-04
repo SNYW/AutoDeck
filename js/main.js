@@ -3,10 +3,11 @@
 (function () {
     let currentDifficulty = 'standard';
     let currentDisabled = new Set();
+    let currentStructured = false;
     let appMode = 'solo';       // 'solo' | 'host' | 'player'
     let currentArch = null;     // current architecture data
 
-    const diffBtns = document.querySelectorAll('.diff-btn');
+    const diffSelect = document.getElementById('diff-select');
     const floorInput = document.getElementById('floor-override');
     const branchInput = document.getElementById('branch-override');
     const shareBtn = document.getElementById('share-btn');
@@ -58,7 +59,9 @@
             seed: p.get('s') != null ? parseInt(p.get('s'), 36) : null,
             floors: p.get('f') != null ? parseInt(p.get('f'), 10) : null,
             branches: p.get('b') != null ? parseInt(p.get('b'), 10) : null,
-            disabled: decodeFilters(p.get('x'))
+            disabled: decodeFilters(p.get('x')),
+            structured: p.get('t') === '1',
+            join: p.get('join')
         };
     }
 
@@ -73,6 +76,7 @@
                 ? new Set(arch.disabledKeys) : null
         );
         if (filterParam != null) p.set('x', filterParam);
+        if (arch.structured) p.set('t', '1');
         const url = window.location.pathname + '?' + p.toString();
         window.history.replaceState(null, '', url);
     }
@@ -81,6 +85,7 @@
     function doGenerate(opts) {
         opts = opts || {};
         opts.disabled = currentDisabled.size > 0 ? currentDisabled : null;
+        opts.structured = currentStructured;
         const arch = Generator.generate(currentDifficulty, opts);
         currentArch = arch;
         Renderer.render(arch, appMode);
@@ -91,14 +96,10 @@
         shareBtn.classList.remove('hidden');
     }
 
-    // ---- Difficulty buttons ----
-    diffBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            if (appMode === 'host') return; // locked during session
-            diffBtns.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            currentDifficulty = btn.dataset.difficulty;
-        });
+    // ---- Difficulty dropdown ----
+    diffSelect.addEventListener('change', () => {
+        if (appMode === 'host') return; // locked during session
+        currentDifficulty = diffSelect.value;
     });
 
     // ---- Generate button ----
@@ -123,12 +124,11 @@
         });
     });
 
-    // ---- DM Mode toggle ----
-    const dmToggle = document.getElementById('dm-toggle');
-    dmToggle.addEventListener('click', () => {
-        if (appMode === 'player') return; // player can't toggle DM mode
-        document.body.classList.toggle('dm-mode');
-        dmToggle.classList.toggle('active');
+    // ---- Structured mode toggle ----
+    const structToggle = document.getElementById('struct-toggle');
+    structToggle.addEventListener('click', () => {
+        currentStructured = !currentStructured;
+        structToggle.classList.toggle('active', currentStructured);
     });
 
     // ---- Advanced Options panel ----
@@ -198,68 +198,58 @@
     // ============================================================
 
     const hostBtn = document.getElementById('host-btn');
-    const joinBtn = document.getElementById('join-btn');
     const sessionHostInfo = document.getElementById('session-host-info');
-    const sessionJoinForm = document.getElementById('session-join-form');
     const sessionPlayerInfo = document.getElementById('session-player-info');
     const sessionCodeEl = document.getElementById('session-code');
     const sessionStatusEl = document.getElementById('session-status');
     const sessionEndBtn = document.getElementById('session-end-btn');
-    const joinCodeInput = document.getElementById('join-code-input');
-    const joinGoBtn = document.getElementById('join-go-btn');
-    const joinCancelBtn = document.getElementById('join-cancel-btn');
     const sessionPlayerCode = document.getElementById('session-player-code');
     const sessionLeaveBtn = document.getElementById('session-leave-btn');
+    const sessionBar = document.getElementById('session-bar');
 
     // ---- Mode switching ----
     function setMode(mode) {
-        // Remove old mode class
         document.body.classList.remove('mode-solo', 'mode-host', 'mode-player');
         appMode = mode;
         document.body.classList.add('mode-' + mode);
         Renderer.setMode(mode);
 
-        // Update UI visibility
         const playerBar = document.getElementById('player-bar');
         const actionLog = document.getElementById('action-log');
 
         if (mode === 'solo') {
+            sessionBar.classList.add('hidden');
             sessionHostInfo.classList.add('hidden');
-            sessionJoinForm.classList.add('hidden');
             sessionPlayerInfo.classList.add('hidden');
             playerBar.classList.add('hidden');
             actionLog.classList.add('hidden');
             hostBtn.style.display = '';
-            joinBtn.style.display = '';
-            // Restore generate button
             document.getElementById('generate-btn').disabled = false;
         } else if (mode === 'host') {
+            sessionBar.classList.remove('hidden');
             sessionHostInfo.classList.remove('hidden');
-            sessionJoinForm.classList.add('hidden');
             sessionPlayerInfo.classList.add('hidden');
             playerBar.classList.add('hidden');
             actionLog.classList.remove('hidden');
             hostBtn.style.display = 'none';
-            joinBtn.style.display = 'none';
-            // Enable DM mode automatically
-            if (!document.body.classList.contains('dm-mode')) {
-                document.body.classList.add('dm-mode');
-                dmToggle.classList.add('active');
-            }
-            // Disable generate during session
             document.getElementById('generate-btn').disabled = true;
         } else if (mode === 'player') {
+            sessionBar.classList.remove('hidden');
             sessionHostInfo.classList.add('hidden');
-            sessionJoinForm.classList.add('hidden');
             sessionPlayerInfo.classList.remove('hidden');
             playerBar.classList.remove('hidden');
             actionLog.classList.remove('hidden');
             hostBtn.style.display = 'none';
-            joinBtn.style.display = 'none';
-            // Force-disable DM mode — players must not see hidden floors or edit controls
-            document.body.classList.remove('dm-mode');
-            dmToggle.classList.remove('active');
         }
+    }
+
+    const sessionCopyLinkBtn = document.getElementById('session-copy-link');
+    const sessionLinkText = document.getElementById('session-link-text');
+    let currentJoinURL = '';
+
+    // ---- Build join URL for a session code ----
+    function buildJoinURL(code) {
+        return window.location.origin + window.location.pathname + '?join=' + code;
     }
 
     // ---- HOST button ----
@@ -280,6 +270,20 @@
             const code = await Session.create(arch);
             sessionCodeEl.textContent = code;
             setMode('host');
+
+            // Build and display join link
+            currentJoinURL = buildJoinURL(code);
+            sessionLinkText.textContent = currentJoinURL;
+
+            // Auto-copy to clipboard
+            navigator.clipboard.writeText(currentJoinURL).then(() => {
+                sessionCopyLinkBtn.textContent = 'COPIED';
+                sessionCopyLinkBtn.classList.add('copied');
+                setTimeout(() => {
+                    sessionCopyLinkBtn.textContent = 'COPY LINK';
+                    sessionCopyLinkBtn.classList.remove('copied');
+                }, 2000);
+            }).catch(() => {});
 
             // Re-render in host mode (preserves the same architecture)
             Renderer.render(arch, 'host');
@@ -333,39 +337,23 @@
         }
     });
 
-    // ---- JOIN button ----
-    joinBtn.addEventListener('click', () => {
-        if (!FirebaseConfig.isReady()) {
-            alert('Firebase not configured. Please update js/firebase-config.js with your Firebase project settings.');
-            return;
-        }
-        sessionJoinForm.classList.remove('hidden');
-        hostBtn.style.display = 'none';
-        joinBtn.style.display = 'none';
-        joinCodeInput.value = '';
-        joinCodeInput.focus();
+    // ---- COPY LINK button (host) ----
+    sessionCopyLinkBtn.addEventListener('click', () => {
+        if (!currentJoinURL) return;
+        navigator.clipboard.writeText(currentJoinURL).then(() => {
+            sessionCopyLinkBtn.textContent = 'COPIED';
+            sessionCopyLinkBtn.classList.add('copied');
+            setTimeout(() => {
+                sessionCopyLinkBtn.textContent = 'COPY LINK';
+                sessionCopyLinkBtn.classList.remove('copied');
+            }, 2000);
+        });
     });
 
-    // ---- CANCEL join ----
-    joinCancelBtn.addEventListener('click', () => {
-        sessionJoinForm.classList.add('hidden');
-        hostBtn.style.display = '';
-        joinBtn.style.display = '';
-    });
-
-    // ---- CONNECT (join session) ----
-    joinGoBtn.addEventListener('click', doJoin);
-    joinCodeInput.addEventListener('keydown', e => {
-        if (e.key === 'Enter') doJoin();
-    });
-
-    async function doJoin() {
-        const code = joinCodeInput.value.trim().toUpperCase();
-        if (code.length < 4) {
-            joinCodeInput.style.borderColor = 'var(--bottom)';
-            setTimeout(() => { joinCodeInput.style.borderColor = ''; }, 1000);
-            return;
-        }
+    // ---- Auto-join via URL (?join=CODE) ----
+    async function doJoin(code) {
+        code = code.trim().toUpperCase();
+        if (code.length < 4) return;
 
         try {
             const arch = await Session.join(code);
@@ -419,12 +407,14 @@
 
             await Session.pushLog('Runner jacked in');
 
+            // Clean join param from URL so refresh doesn't retry
+            window.history.replaceState(null, '', window.location.pathname);
+
         } catch (e) {
             alert('Failed to join: ' + e.message);
             console.error(e);
-            // Reset join form
-            joinCodeInput.style.borderColor = 'var(--bottom)';
-            setTimeout(() => { joinCodeInput.style.borderColor = ''; }, 1000);
+            // Clean join param from URL so refresh doesn't retry
+            window.history.replaceState(null, '', window.location.pathname);
         }
     }
 
@@ -442,11 +432,6 @@
 
     function endSession() {
         GameState.clearCallbacks();
-        // Disable DM mode if it was auto-enabled for host
-        if (document.body.classList.contains('dm-mode')) {
-            document.body.classList.remove('dm-mode');
-            dmToggle.classList.remove('active');
-        }
         setMode('solo');
         // Re-render in solo mode with current arch if available
         if (currentArch) {
@@ -609,15 +594,17 @@
 
     if (url.difficulty && TABLES.DIFFICULTIES[url.difficulty]) {
         currentDifficulty = url.difficulty;
-        diffBtns.forEach(b => {
-            b.classList.toggle('active', b.dataset.difficulty === currentDifficulty);
-        });
+        diffSelect.value = currentDifficulty;
     }
     if (url.floors != null) {
         floorInput.value = url.floors;
     }
     if (url.branches != null) {
         branchInput.value = url.branches;
+    }
+    if (url.structured) {
+        currentStructured = true;
+        structToggle.classList.add('active');
     }
     if (url.disabled) {
         currentDisabled = url.disabled;
@@ -633,4 +620,17 @@
         floorOverride: url.floors,
         branchOverride: url.branches
     });
+
+    // ---- Auto-join if ?join=CODE is in URL ----
+    if (url.join) {
+        // Small delay to ensure Firebase SDK is fully initialized
+        setTimeout(() => {
+            if (!FirebaseConfig.isReady()) {
+                alert('Firebase not configured. Cannot auto-join session.');
+                window.history.replaceState(null, '', window.location.pathname);
+                return;
+            }
+            doJoin(url.join);
+        }, 300);
+    }
 })();

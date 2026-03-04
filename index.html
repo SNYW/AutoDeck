@@ -16,11 +16,14 @@
 <section id="controls">
     <div class="controls-row">
         <div class="diff-group">
-            <span class="diff-label">Difficulty</span>
-            <button class="diff-btn" data-difficulty="basic">Basic</button>
-            <button class="diff-btn active" data-difficulty="standard">Standard</button>
-            <button class="diff-btn" data-difficulty="uncommon">Uncommon</button>
-            <button class="diff-btn" data-difficulty="advanced">Advanced</button>
+            <label class="diff-label" for="diff-select">Difficulty</label>
+            <select id="diff-select">
+                <option value="basic">Basic</option>
+                <option value="standard" selected>Standard</option>
+                <option value="uncommon">Uncommon</option>
+                <option value="advanced">Advanced</option>
+            </select>
+            <span id="interface-rec" class="interface-rec-label"></span>
         </div>
         <div class="floor-group">
             <label class="diff-label" for="floor-override">Floors</label>
@@ -30,42 +33,38 @@
             <label class="diff-label" for="branch-override">Branches</label>
             <input id="branch-override" type="number" min="0" max="15" placeholder="1d10" title="Leave blank for random (1d10, 7+ = branch). Range: 0–15. Clamped to fit floor count.">
         </div>
+        <button id="struct-toggle" title="Structured mode — tactical floor placement (passwords as gates, ICE as guards, valuables deep)">STRUCTURED</button>
         <button id="generate-btn">GENERATE</button>
         <button id="share-btn" class="hidden" title="Copy shareable link to clipboard">SHARE</button>
-            <button id="dm-toggle" title="Toggle DM Mode — reveal all floors">DM MODE</button>
+        <button id="host-btn" class="session-btn" title="Host a multiplayer session">HOST</button>
     </div>
 </section>
 
-<!-- Session bar — multiplayer controls -->
-<section id="session-bar">
-    <div class="session-row">
-        <button id="host-btn" class="session-btn" title="Host a multiplayer session">HOST</button>
-        <button id="join-btn" class="session-btn" title="Join an existing session">JOIN</button>
-
-        <!-- Shown when hosting -->
-        <div id="session-host-info" class="hidden">
-            <span class="session-label">SESSION</span>
-            <span id="session-code" class="session-code"></span>
-            <div id="session-status" class="session-status">
-                <span class="status-dot"></span>
-                <span class="status-text">Waiting for player...</span>
-            </div>
+<!-- Session panel — shown when hosting or connected as player -->
+<section id="session-bar" class="hidden">
+    <!-- Shown when hosting — centered panel -->
+    <div id="session-host-info" class="hidden">
+        <span class="session-label">SESSION</span>
+        <span id="session-code" class="session-code"></span>
+        <div id="session-status" class="session-status">
+            <span class="status-dot"></span>
+            <span class="status-text">Waiting for player...</span>
+        </div>
+        <div class="session-actions">
+            <button id="session-copy-link" class="session-btn" title="Copy join link to clipboard">COPY LINK</button>
             <button id="session-end-btn" class="session-btn">END</button>
         </div>
-
-        <!-- Shown when joining -->
-        <div id="session-join-form" class="hidden">
-            <input id="join-code-input" type="text" maxlength="6" placeholder="CODE" autocomplete="off" spellcheck="false">
-            <button id="join-go-btn" class="session-btn">CONNECT</button>
-            <button id="join-cancel-btn" class="session-btn">CANCEL</button>
+        <div id="session-link-row">
+            <span class="session-link-label">Join link:</span>
+            <span id="session-link-text" class="session-link-text"></span>
         </div>
+    </div>
 
-        <!-- Shown after joined -->
-        <div id="session-player-info" class="hidden">
-            <span class="session-label">CONNECTED</span>
-            <span id="session-player-code" class="session-code"></span>
-            <button id="session-leave-btn" class="session-btn">LEAVE</button>
-        </div>
+    <!-- Shown after joined as player -->
+    <div id="session-player-info" class="hidden">
+        <span class="session-label">CONNECTED</span>
+        <span id="session-player-code" class="session-code"></span>
+        <button id="session-leave-btn" class="session-btn">LEAVE</button>
     </div>
 </section>
 
@@ -116,8 +115,6 @@
         </div>
     </div>
 </section>
-
-<div id="summary" class="hidden"></div>
 
 <main id="main">
     <div id="arch-scroll">

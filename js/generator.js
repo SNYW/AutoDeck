@@ -99,9 +99,114 @@ const Generator = (() => {
         return { content: deepClone(TABLES.BODY[total][difficulty]), roll: total, dice, table: 'body' };
     }
 
+    // ---- Structural Intelligence — post-generation rearrangement ----
+    // Swaps floor content to follow tactical NET security design:
+    //   - Password/ICE gates at entry points
+    //   - Files/Control Nodes pushed deeper (protected)
+    //   - Branch entries guarded by ICE or Passwords
+    //   - Bottom floor is ICE when possible
+
+    function isValuable(content) {
+        return content.type === 'file' || content.type === 'control_node';
+    }
+
+    function swapContent(floors, i, j) {
+        const tmp = floors[i].content;
+        floors[i].content = floors[j].content;
+        floors[j].content = tmp;
+        const tmpRoll = floors[i].roll;
+        floors[i].roll = floors[j].roll;
+        floors[j].roll = tmpRoll;
+    }
+
+    function structureArch(branches, bottomBranchId) {
+        // --- Main branch body floors (index 2+) ---
+        const main = branches[0];
+        if (main.floors.length <= 2) return; // only lobby, nothing to rearrange
+
+        const bodyStart = 2;
+        const bodyEnd = main.floors.length;
+
+        // Rule 1: Gate floor (floor index 2) — first password moves here
+        const pwIdx = main.floors.slice(bodyStart).findIndex(f => f.content.type === 'password');
+        if (pwIdx > 0) {
+            swapContent(main.floors, bodyStart, bodyStart + pwIdx);
+        } else if (pwIdx === -1) {
+            // No password anywhere — move first ICE to gate
+            const iceIdx = main.floors.slice(bodyStart).findIndex(f => f.content.type === 'black_ice');
+            if (iceIdx > 0) swapContent(main.floors, bodyStart, bodyStart + iceIdx);
+        }
+
+        // Rule 2: Push valuables deeper — swap shallow valuables with deep ICE
+        const bodyLen = bodyEnd - bodyStart;
+        const mid = bodyStart + Math.floor(bodyLen / 2);
+        for (let i = bodyStart + 1; i < mid; i++) {
+            if (isValuable(main.floors[i].content)) {
+                // Find ICE in bottom half to swap with
+                for (let j = bodyEnd - 1; j >= mid; j--) {
+                    if (main.floors[j].content.type === 'black_ice') {
+                        swapContent(main.floors, i, j);
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Rule 3: Fork guards — ensure floor before each fork has ICE
+        branches.forEach(b => {
+            if (b.forkAfterFloor == null) return;
+            const guardIdx = b.forkAfterFloor; // main floor index at fork
+            if (guardIdx < bodyStart || guardIdx >= bodyEnd) return;
+            if (main.floors[guardIdx].content.type !== 'black_ice') {
+                // Find nearest ICE to swap in
+                for (let j = bodyEnd - 1; j >= bodyStart; j--) {
+                    if (j === guardIdx) continue;
+                    if (main.floors[j].content.type === 'black_ice') {
+                        swapContent(main.floors, guardIdx, j);
+                        break;
+                    }
+                }
+            }
+        });
+
+        // Restore main floor indices
+        main.floors.forEach((f, i) => { f.index = i; });
+
+        // --- Side branches: entry guard ---
+        for (let bIdx = 1; bIdx < branches.length; bIdx++) {
+            const branch = branches[bIdx];
+            if (branch.floors.length < 2) continue;
+
+            const entry = branch.floors[0].content;
+            if (isValuable(entry) || entry.type === 'empty') {
+                const guardIdx = branch.floors.findIndex(f =>
+                    f.content.type === 'black_ice' || f.content.type === 'password'
+                );
+                if (guardIdx > 0) swapContent(branch.floors, 0, guardIdx);
+            }
+            branch.floors.forEach((f, i) => { f.index = i; });
+        }
+
+        // --- Bottom floor: should be ICE ---
+        const bottomBranch = branches[bottomBranchId];
+        const lastIdx = bottomBranch.floors.length - 1;
+        // Skip lobby floors on main branch
+        const searchStart = bottomBranch.isMain ? 2 : 0;
+        if (lastIdx > searchStart && bottomBranch.floors[lastIdx].content.type !== 'black_ice') {
+            for (let i = lastIdx - 1; i >= searchStart; i--) {
+                if (bottomBranch.floors[i].content.type === 'black_ice') {
+                    swapContent(bottomBranch.floors, i, lastIdx);
+                    break;
+                }
+            }
+            bottomBranch.floors.forEach((f, i) => { f.index = i; });
+        }
+    }
+
     // ---- Main generation entry point ----
     // opts.floorOverride — fixed floor count (3–18), or null for random 3d6
     // opts.branchOverride — fixed branch count (0–15), or null for random 1d10
+    // opts.structured — tactical floor placement (default false)
     // opts.seed — 32-bit seed for reproducible generation, or null for random
     // opts.disabled — Set of disabled filter keys, or null for no filtering
     function generate(difficulty, opts) {
@@ -224,6 +329,12 @@ const Generator = (() => {
             }
         }
 
+        // Step 3: structural rearrangement (if enabled)
+        const structured = !!opts.structured;
+        if (structured) {
+            structureArch(branches, bottomId);
+        }
+
         return {
             difficulty,
             totalFloors,
@@ -234,6 +345,7 @@ const Generator = (() => {
             maxDepth,
             branches,
             seed,
+            structured,
             disabledKeys: disabledSet ? Array.from(disabledSet) : []
         };
     }

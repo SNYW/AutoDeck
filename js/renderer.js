@@ -182,7 +182,7 @@ const Renderer = (() => {
             floorIdx === branch.floors.length - 1;
 
         const el = document.createElement('div');
-        el.className = `floor-card ${typeClass(content)} floor-hidden`;
+        el.className = `floor-card ${typeClass(content)}${currentMode === 'player' ? ' floor-hidden' : ''}`;
         if (isBottom) el.classList.add('is-bottom');
         if (floor.isLobby) el.classList.add('is-lobby');
 
@@ -238,12 +238,7 @@ const Renderer = (() => {
                 return;
             }
 
-            // Solo mode — original behavior
-            if (el.classList.contains('floor-hidden') && !document.body.classList.contains('dm-mode')) {
-                triggerReveal(el, 'floor-revealing');
-                el.classList.remove('floor-hidden');
-                return;
-            }
+            // Solo mode — click shows detail
             if (selectedCard) selectedCard.classList.remove('selected');
             selectedCard = el;
             el.classList.add('selected');
@@ -333,20 +328,11 @@ const Renderer = (() => {
         }
     }
 
-    // ---- Summary bar ----
+    // ---- Inline interface recommendation label ----
     function renderSummary(arch) {
         const diff = TABLES.DIFFICULTIES[arch.difficulty];
-        const summary = document.getElementById('summary');
-        summary.classList.remove('hidden');
-        summary.innerHTML = `
-            <div class="sum-item"><span class="sum-label">Difficulty</span><span class="sum-val">${diff.label}</span></div>
-            <div class="sum-item"><span class="sum-label">Floors</span><span class="sum-val">${arch.totalFloors}</span></div>
-            <div class="sum-item"><span class="sum-label">Branches</span><span class="sum-val">${arch.numBranches === 0 ? 'None' : arch.numBranches}</span></div>
-            <div class="sum-item"><span class="sum-label">DV</span><span class="sum-val">${diff.dv}</span></div>
-            <div class="sum-item"><span class="sum-label">Interface Rec.</span><span class="sum-val">${diff.interfaceRec}+</span></div>
-            <div class="sum-item"><span class="sum-label">Floor Dice</span><span class="sum-val">${arch.floorDice ? '[' + arch.floorDice.join(', ') + '] = ' + arch.totalFloors : 'Override (' + arch.totalFloors + ')'}</span></div>
-            <div class="sum-item"><span class="sum-label">Bottom</span><span class="sum-val">${arch.branches[arch.bottomBranchId].name}</span></div>
-        `;
+        const el = document.getElementById('interface-rec');
+        if (el) el.textContent = `Min. Interface ${diff.interfaceRec}+`;
     }
 
     // ---- Edit section builder (host mode) ----
@@ -610,10 +596,8 @@ const Renderer = (() => {
 
         body.innerHTML = html;
 
-        // Show edit section in host mode OR solo DM mode (never for players)
-        const isDM = currentMode !== 'player' &&
-            (currentMode === 'host' || document.body.classList.contains('dm-mode'));
-        if (isDM && branchIdx !== undefined) {
+        // Show edit section in host or solo mode (never for players)
+        if (currentMode !== 'player' && branchIdx !== undefined) {
             body.appendChild(buildEditSection(content, branchIdx, floorIdx, branch, isBottom));
         }
     }
