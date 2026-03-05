@@ -479,6 +479,29 @@ const Renderer = (() => {
         typeSelect.addEventListener('change', () => buildSubSection(typeSelect.value));
         buildSubSection(content.type);
 
+        // GM Notes textarea (universal — all floor types)
+        const notesLabel = document.createElement('label');
+        notesLabel.className = 'det-label';
+        notesLabel.textContent = 'GM NOTES';
+        section.appendChild(notesLabel);
+
+        const notesTextarea = document.createElement('textarea');
+        notesTextarea.className = 'det-textarea';
+        const placeholders = {
+            file: 'Describe what data this file contains...',
+            control_node: 'e.g., Security cameras, turret, elevator lock...',
+            password: 'e.g., Known to Arasaka security team...',
+            black_ice: 'e.g., Guards the main server room...',
+            empty: 'e.g., Traces of deleted data, old access logs...'
+        };
+        notesTextarea.placeholder = placeholders[content.type] || 'Add notes about this floor...';
+        notesTextarea.value = content.notes || '';
+        section.appendChild(notesTextarea);
+
+        typeSelect.addEventListener('change', () => {
+            notesTextarea.placeholder = placeholders[typeSelect.value] || 'Add notes about this floor...';
+        });
+
         // APPLY button
         const applyBtn = document.createElement('button');
         applyBtn.className = 'det-apply-btn';
@@ -500,6 +523,12 @@ const Renderer = (() => {
             } else {
                 const dv = parseInt(subSection.querySelector('.edit-dv-select').value);
                 newContent = { type, dv };
+            }
+
+            // Attach GM notes (only if non-empty, to keep data clean)
+            const notesVal = notesTextarea.value.trim();
+            if (notesVal) {
+                newContent.notes = notesVal;
             }
 
             applyBtn.textContent = 'APPLYING...';
@@ -562,15 +591,11 @@ const Renderer = (() => {
             html += `<div class="det-section">
                 <div class="det-row"><span>Eye-Dee Check</span><span>Interface + 1d10 &#8805; ${content.dv}</span></div>
                 <p class="det-note">Identify with Eye-Dee. Save a copy to Cyberdeck (free action). Use Cloak to hide your traces.</p>
-                <label class="det-label">File Contents (GM Notes)</label>
-                <textarea class="det-textarea" placeholder="Describe what data this file contains..."></textarea>
             </div>`;
         } else if (content.type === 'control_node') {
             html += `<div class="det-section">
                 <div class="det-row"><span>Control Check</span><span>Interface + 1d10 &#8805; ${content.dv}</span></div>
                 <p class="det-note">Once controlled, operating each device costs 1 NET Action. Each node activates once per Turn.</p>
-                <label class="det-label">Connected Systems (GM Notes)</label>
-                <textarea class="det-textarea" placeholder="e.g., Security cameras, turret, elevator lock..."></textarea>
             </div>`;
         } else if (content.type === 'empty') {
             html += `<div class="det-section">
