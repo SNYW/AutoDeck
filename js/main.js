@@ -12,6 +12,19 @@
     const branchInput = document.getElementById('branch-override');
     const shareBtn = document.getElementById('share-btn');
 
+    // ---- Sound toggle ----
+    const sfxToggle = document.getElementById('sfx-toggle');
+    function syncSfxToggle() {
+        sfxToggle.classList.toggle('active', SFX.isEnabled());
+        sfxToggle.classList.toggle('muted', !SFX.isEnabled());
+    }
+    sfxToggle.addEventListener('click', () => {
+        SFX.toggle();
+        syncSfxToggle();
+        SFX.click(); // audible feedback if just enabled
+    });
+    syncSfxToggle();
+
     // ---- Filter key order (stable for bitmask URL encoding) ----
     const FILTER_KEYS = [
         'Asp', 'Giant', 'Hellhound', 'Kraken', 'Liche', 'Raven', 'Scorpion', 'Skunk', 'Wisp',
@@ -96,10 +109,18 @@
         shareBtn.classList.remove('hidden');
     }
 
+    // ---- Interface recommendation display ----
+    function updateInterfaceRec() {
+        const diff = TABLES.DIFFICULTIES[currentDifficulty];
+        const el = document.getElementById('interface-rec');
+        if (el && diff) el.textContent = `Min. Interface ${diff.interfaceRec}+`;
+    }
+
     // ---- Difficulty dropdown ----
     diffSelect.addEventListener('change', () => {
         if (appMode === 'host') return; // locked during session
         currentDifficulty = diffSelect.value;
+        updateInterfaceRec();
     });
 
     // ---- Generate button ----
@@ -109,11 +130,13 @@
         const floorOverride = rawFloors !== '' ? parseInt(rawFloors, 10) : null;
         const rawBranches = branchInput.value.trim();
         const branchOverride = rawBranches !== '' ? parseInt(rawBranches, 10) : null;
+        SFX.connect();
         doGenerate({ floorOverride, branchOverride });
     });
 
     // ---- Share button ----
     shareBtn.addEventListener('click', () => {
+        SFX.copy();
         navigator.clipboard.writeText(window.location.href).then(() => {
             shareBtn.textContent = 'COPIED';
             shareBtn.classList.add('copied');
@@ -129,6 +152,15 @@
     structToggle.addEventListener('click', () => {
         currentStructured = !currentStructured;
         structToggle.classList.toggle('active', currentStructured);
+        SFX.click();
+    });
+
+    // ---- Basic Options panel ----
+    const basicToggle = document.getElementById('basic-toggle');
+    const basicPanel = document.getElementById('basic-panel');
+    basicToggle.addEventListener('click', () => {
+        basicPanel.classList.toggle('collapsed');
+        basicToggle.classList.toggle('open');
     });
 
     // ---- Advanced Options panel ----
@@ -137,7 +169,7 @@
     const filterCheckboxes = document.querySelectorAll('#adv-panel input[data-filter]');
 
     advToggle.addEventListener('click', () => {
-        advPanel.classList.toggle('adv-collapsed');
+        advPanel.classList.toggle('collapsed');
         advToggle.classList.toggle('open');
     });
 
@@ -180,6 +212,19 @@
             btn.textContent = allEnabled ? 'NONE' : 'ALL';
         });
     }
+
+    // ---- Compact card toggle ----
+    const compactToggle = document.getElementById('compact-toggle');
+    function syncCompactToggle() {
+        compactToggle.classList.toggle('active', Renderer.isCompact());
+        compactToggle.textContent = Renderer.isCompact() ? 'DETAILED' : 'COMPACT';
+    }
+    compactToggle.addEventListener('click', () => {
+        Renderer.toggleCompact();
+        syncCompactToggle();
+        SFX.click();
+        try { localStorage.setItem('autodeck-compact', Renderer.isCompact() ? '1' : '0'); } catch(e) {}
+    });
 
     // ---- Close detail panel ----
     document.getElementById('detail-close').addEventListener('click', () => {
@@ -269,6 +314,7 @@
         try {
             const code = await Session.create(arch);
             sessionCodeEl.textContent = code;
+            SFX.connect();
             setMode('host');
 
             // Build and display join link
@@ -340,6 +386,7 @@
     // ---- COPY LINK button (host) ----
     sessionCopyLinkBtn.addEventListener('click', () => {
         if (!currentJoinURL) return;
+        SFX.copy();
         navigator.clipboard.writeText(currentJoinURL).then(() => {
             sessionCopyLinkBtn.textContent = 'COPIED';
             sessionCopyLinkBtn.classList.add('copied');
@@ -359,6 +406,7 @@
             const arch = await Session.join(code);
             currentArch = arch;
             sessionPlayerCode.textContent = code;
+            SFX.connect();
             setMode('player');
 
             // Render for player — all floors start hidden
@@ -437,6 +485,7 @@
         if (currentArch) {
             Renderer.render(currentArch, 'solo');
         }
+        updateInterfaceRec();
     }
 
     // ============================================================
@@ -501,7 +550,10 @@
         if (available.length === 1) {
             // Single path — move directly
             const result = await GameState.movePlayer(available[0].branch, available[0].floor);
-            if (!result.success) {
+            if (result.success) {
+                SFX.move();
+            } else {
+                SFX.error();
                 flashMoveError(result.reason);
             }
         } else {
@@ -520,7 +572,10 @@
             btn.addEventListener('click', async () => {
                 branchModal.classList.add('hidden');
                 const result = await GameState.movePlayer(opt.branch, opt.floor);
-                if (!result.success) {
+                if (result.success) {
+                    SFX.move();
+                } else {
+                    SFX.error();
                     flashMoveError(result.reason);
                 }
             });
@@ -546,6 +601,7 @@
     // ---- JACK OUT button ----
     jackoutBtn.addEventListener('click', async () => {
         if (appMode !== 'player') return;
+        SFX.jackout();
         await GameState.jackOut();
     });
 
@@ -611,10 +667,19 @@
         syncCheckboxes();
         updateGroupToggleLabels();
         // Auto-expand panel when filters are active from URL
-        advPanel.classList.remove('adv-collapsed');
+        advPanel.classList.remove('collapsed');
         advToggle.classList.add('open');
     }
 
+    // Restore compact mode preference
+    try {
+        if (localStorage.getItem('autodeck-compact') === '1') {
+            Renderer.setCompact(true);
+            syncCompactToggle();
+        }
+    } catch(e) {}
+
+    updateInterfaceRec();
     doGenerate({
         seed: url.seed,
         floorOverride: url.floors,

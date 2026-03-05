@@ -4,15 +4,21 @@ const Renderer = (() => {
     // Layout constants
     const CARD_W = 280;
     const CARD_H = 68;
+    const CARD_H_COMPACT = 34;
     const ROW_GAP = 28;
+    const ROW_GAP_COMPACT = 10;
     const COL_GAP = 64;
-    const ROW_H = CARD_H + ROW_GAP;
     const PAD = 24;
 
     let selectedCard = null;
     let cardMap = {};         // "branchIdx-floorIdx" → DOM element
     let currentMode = 'solo'; // 'solo' | 'host' | 'player'
     let currentArch = null;
+    let compact = false;
+
+    function cardH() { return compact ? CARD_H_COMPACT : CARD_H; }
+    function rowGap() { return compact ? ROW_GAP_COMPACT : ROW_GAP; }
+    function rowH() { return cardH() + rowGap(); }
 
     // ---- Label helpers ----
     function floorLabel(content) {
@@ -77,7 +83,7 @@ const Renderer = (() => {
                     floorIdx: fIdx,
                     row,
                     x: PAD + bIdx * (CARD_W + COL_GAP),
-                    y: PAD + row * ROW_H,
+                    y: PAD + row * rowH(),
                     floor,
                     branch
                 });
@@ -127,7 +133,7 @@ const Renderer = (() => {
                 const cx = a.x + CARD_W / 2;
                 const fromKey = a.branchIdx + '-' + a.floorIdx;
                 const toKey = b.branchIdx + '-' + b.floorIdx;
-                line(cx, a.y + CARD_H, cx, b.y, 'conn-line', fromKey, toKey);
+                line(cx, a.y + cardH(), cx, b.y, 'conn-line', fromKey, toKey);
             }
         });
 
@@ -151,7 +157,7 @@ const Renderer = (() => {
             ).filter(Boolean);
             if (branchCards.length === 0) return;
 
-            const y = mainCard.y + CARD_H / 2;
+            const y = mainCard.y + cardH() / 2;
             const xStart = mainCard.x + CARD_W;
             const xEnd = branchCards[branchCards.length - 1].x;
             const mainKey = mainCard.branchIdx + '-' + mainCard.floorIdx;
@@ -162,7 +168,7 @@ const Renderer = (() => {
 
             // Vertical drop to each branch's first card
             branchCards.forEach(bc => {
-                const by = bc.y + CARD_H / 2;
+                const by = bc.y + cardH() / 2;
                 const bcKey = bc.branchIdx + '-0';
                 if (Math.abs(by - y) > 1) {
                     path(`M ${bc.x},${y} L ${bc.x},${by}`, 'conn-fork', mainKey, bcKey);
@@ -182,7 +188,7 @@ const Renderer = (() => {
             floorIdx === branch.floors.length - 1;
 
         const el = document.createElement('div');
-        el.className = `floor-card ${typeClass(content)}${currentMode === 'player' ? ' floor-hidden' : ''}`;
+        el.className = `floor-card ${typeClass(content)}${currentMode === 'player' ? ' floor-hidden' : ''}${compact ? ' compact' : ''}`;
         if (isBottom) el.classList.add('is-bottom');
         if (floor.isLobby) el.classList.add('is-lobby');
 
@@ -194,7 +200,7 @@ const Renderer = (() => {
         el.style.left = cardData.x + 'px';
         el.style.top = cardData.y + 'px';
         el.style.width = CARD_W + 'px';
-        el.style.height = CARD_H + 'px';
+        el.style.height = cardH() + 'px';
         el.style.animationDelay = (cardData.row * 0.06) + 's';
 
         const numLabel = branch.isMain
@@ -251,6 +257,8 @@ const Renderer = (() => {
     // ---- Trigger cyberpunk reveal animation on an element ----
     function triggerReveal(el, className) {
         el.classList.add(className);
+        // Play reveal sound for floor cards (not SVG connector lines)
+        if (className === 'floor-revealing') SFX.reveal();
         el.addEventListener('animationend', function handler() {
             el.classList.remove(className);
             el.removeEventListener('animationend', handler);
@@ -673,7 +681,7 @@ const Renderer = (() => {
 
         // Compute container size
         const maxX = Math.max(...cards.map(c => c.x)) + CARD_W + PAD;
-        const maxY = Math.max(...cards.map(c => c.y)) + CARD_H + PAD;
+        const maxY = Math.max(...cards.map(c => c.y)) + cardH() + PAD;
 
         container.style.width = maxX + 'px';
         container.style.height = maxY + 'px';
@@ -699,5 +707,21 @@ const Renderer = (() => {
         hideDetail();
     }
 
-    return { render, hideDetail, updateFloorStates, updateCardContent, setMode, getCardMap };
+    function toggleCompact() {
+        compact = !compact;
+        if (currentArch) {
+            render(currentArch, currentMode);
+        }
+        return compact;
+    }
+
+    function isCompact() {
+        return compact;
+    }
+
+    function setCompact(val) {
+        compact = val;
+    }
+
+    return { render, hideDetail, updateFloorStates, updateCardContent, setMode, getCardMap, toggleCompact, isCompact, setCompact };
 })();
