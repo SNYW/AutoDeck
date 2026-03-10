@@ -226,6 +226,23 @@
         try { localStorage.setItem('autodeck-compact', Renderer.isCompact() ? '1' : '0'); } catch(e) {}
     });
 
+    // ---- Export to PNG ----
+    const exportBtn = document.getElementById('export-btn');
+    exportBtn.addEventListener('click', async () => {
+        if (exportBtn.classList.contains('exporting')) return;
+        exportBtn.classList.add('exporting');
+        exportBtn.textContent = 'EXPORTING...';
+        SFX.click();
+        try {
+            const seed = currentArch ? currentArch.seed : null;
+            await Exporter.toPNG(seed);
+        } catch (e) {
+            console.error('[Export] Failed:', e);
+        }
+        exportBtn.classList.remove('exporting');
+        exportBtn.textContent = 'EXPORT';
+    });
+
     // ---- Close detail panel ----
     document.getElementById('detail-close').addEventListener('click', () => {
         Renderer.hideDetail();

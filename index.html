@@ -131,7 +131,10 @@
 
 <main id="main">
     <div id="arch-scroll">
-        <button id="compact-toggle" class="compact-toggle" title="Toggle compact/detailed card view">COMPACT</button>
+        <div class="arch-toolbar">
+            <button id="export-btn" class="arch-toolbar-btn" title="Export architecture as PNG image">EXPORT</button>
+            <button id="compact-toggle" class="arch-toolbar-btn" title="Toggle compact/detailed card view">COMPACT</button>
+        </div>
         <div id="arch-container"></div>
     </div>
 
@@ -176,10 +179,12 @@
 <!-- Firebase SDK (compat builds for IIFE usage) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <script src="js/tables.js"></script>
 <script src="js/generator.js"></script>
 <script src="js/sfx.js"></script>
+<script src="js/exporter.js"></script>
 <script src="js/renderer.js"></script>
 <script src="js/firebase-config.js"></script>
 <script src="js/session.js"></script>

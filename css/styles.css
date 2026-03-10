@@ -322,12 +322,16 @@ body::before {
     margin: 0 auto;
 }
 
-/* --- Compact Toggle Button --- */
-.compact-toggle {
+/* --- Architecture Toolbar (Export / Compact buttons) --- */
+.arch-toolbar {
     float: right;
     position: sticky;
     top: 8px;
     z-index: 50;
+    display: flex;
+    gap: 6px;
+}
+.arch-toolbar-btn {
     background: transparent;
     border: 1px solid var(--border);
     color: var(--text-dim);
@@ -340,14 +344,20 @@ body::before {
     transition: all 0.15s;
     text-transform: uppercase;
 }
-.compact-toggle:hover {
+.arch-toolbar-btn:hover {
     border-color: var(--accent);
     color: var(--accent);
 }
-.compact-toggle.active {
+.arch-toolbar-btn.active {
     border-color: var(--accent);
     color: var(--accent);
     box-shadow: 0 0 8px var(--accent-dim);
+}
+.arch-toolbar-btn.exporting {
+    border-color: var(--accent);
+    color: var(--accent);
+    opacity: 0.6;
+    cursor: wait;
 }
 
 /* --- SVG Connection Lines --- */

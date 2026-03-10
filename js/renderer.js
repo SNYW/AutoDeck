@@ -188,7 +188,7 @@ const Renderer = (() => {
             floorIdx === branch.floors.length - 1;
 
         const el = document.createElement('div');
-        el.className = `floor-card ${typeClass(content)}${currentMode === 'player' ? ' floor-hidden' : ''}${compact ? ' compact' : ''}`;
+        el.className = `floor-card ${typeClass(content)}${currentMode !== 'solo' ? ' floor-hidden' : ''}${compact ? ' compact' : ''}`;
         if (isBottom) el.classList.add('is-bottom');
         if (floor.isLobby) el.classList.add('is-lobby');
 
