@@ -558,16 +558,16 @@ body::before {
     transition: opacity 0.3s ease;
 }
 
-.floor-card.floor-hidden {
+body.mode-player .floor-card.floor-hidden {
     border-left-color: var(--border);
 }
-.floor-card.floor-hidden .card-icon,
-.floor-card.floor-hidden .card-text,
-.floor-card.floor-hidden .card-bottom,
-.floor-card.floor-hidden .card-lobby {
+body.mode-player .floor-card.floor-hidden .card-icon,
+body.mode-player .floor-card.floor-hidden .card-text,
+body.mode-player .floor-card.floor-hidden .card-bottom,
+body.mode-player .floor-card.floor-hidden .card-lobby {
     opacity: 0;
 }
-.floor-card.floor-hidden .card-mystery {
+body.mode-player .floor-card.floor-hidden .card-mystery {
     opacity: 1;
 }
 
