@@ -21,6 +21,19 @@ const Exporter = (() => {
         const selected = container.querySelector('.floor-card.selected');
         if (selected) selected.classList.remove('selected');
 
+        // Disable animations so html2canvas captures final state
+        container.style.setProperty('--export-mode', '1');
+        container.querySelectorAll('.floor-card').forEach(c => {
+            c.style.animation = 'none';
+            c.style.opacity = '1';
+            c.style.transform = 'none';
+        });
+        // Also force SVG connector lines visible
+        container.querySelectorAll('.conn-line, .conn-fork').forEach(c => {
+            c.style.animation = 'none';
+            c.style.opacity = '1';
+        });
+
         try {
             const canvas = await html2canvas(container, {
                 backgroundColor: '#000000',
@@ -64,7 +77,16 @@ const Exporter = (() => {
             console.error('[Exporter] PNG export failed:', e);
         }
 
-        // Restore UI
+        // Restore animations and UI
+        container.querySelectorAll('.floor-card').forEach(c => {
+            c.style.animation = '';
+            c.style.opacity = '';
+            c.style.transform = '';
+        });
+        container.querySelectorAll('.conn-line, .conn-fork').forEach(c => {
+            c.style.animation = '';
+            c.style.opacity = '';
+        });
         if (compactBtn) compactBtn.style.display = '';
         if (exportBtn) exportBtn.style.display = '';
         if (wasOpen) detailPanel.classList.add('open');
